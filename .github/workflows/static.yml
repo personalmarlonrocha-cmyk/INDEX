@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Planejador Nutricional - Versão Simples e Funcional</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f1221;
+      --panel: #161a2e;
+      --soft: #1e2340;
+      --text: #e8eaf6;
+      --muted: #aab1d6;
+      --primary: #7c8cff;
+      --accent: #35d2a3;
+      --danger: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b0e1a 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+    .container {
+      max-width: 1000px; margin: 24px auto; padding: 16px;
+    }
+    .card {
+      background: linear-gradient(180deg, var(--panel), #12162a 100%);
+      border: 1px solid #252a49; border-radius: 14px; padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    h1 { font-size: 22px; margin: 0 0 12px; }
+    h2 { font-size: 18px; margin: 18px 0 10px; color: var(--primary); }
+    label { font-size: 13px; color: var(--muted); margin-bottom: 6px; display: block; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2a3054;
+      background: var(--soft); color: var(--text); outline: none; font-size: 14px;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .grid {
+      display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px;
+    }
+    .col-4 { grid-column: span 4; }
+    .col-6 { grid-column: span 6; }
+    .col-12{ grid-column: span 12; }
+    @media (max-width: 820px){
+      .col-4, .col-6, .col-12 { grid-column: span 12; }
+    }
+    .btn {
+      background: linear-gradient(180deg, #2a3470, #20285c);
+      color: #fff; border: 1px solid #364095; border-radius: 12px;
+      padding: 10px 14px; cursor: pointer; font-weight: 600; font-size: 14px;
+    }
+    .btn:hover { filter: brightness(1.06); }
+    .btn.secondary {
+      background: linear-gradient(180deg, #2a304e, #1d233e); border-color: #38406a;
+    }
+    .btn.danger {
+      background: linear-gradient(180deg, #6a2e2e, #4f2222); border-color: #7b3939;
+    }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .tag {
+      display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid #2e355f; color: var(--muted);
+    }
+    .muted { color: var(--muted); }
+    .result {
+      background: #12162a; border: 1px solid #252a49; border-radius: 12px; padding: 12px; margin-bottom: 10px;
+    }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .row > div { flex: 1; min-width: 220px; }
+    .ok { color: var(--accent); }
+    .warn { color: #ffd166; }
+    .bad { color: var(--danger); }
+    .small { font-size: 12px; color: var(--muted); }
+    .spacer { height: 8px; }
+    .code {
+      white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      background: #0d1124; padding: 10px; border-radius: 10px; border: 1px solid #21264a; color: #9cc3ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Planejador Nutricional</h1>
+      <div class="small">Preencha seus dados, descreva sua dieta atual e seu objetivo. O app calcula e sugere ajustes automaticamente.</div>
+      <div class="spacer"></div>
+
+      <div class="grid">
+        <div class="col-4">
+          <label>Peso (kg)</label>
+          <input id="peso" type="number" placeholder="Ex.: 78" />
+        </div>
+        <div class="col-4">
+          <label>Altura (cm)</label>
+          <input id="altura" type="number" placeholder="Ex.: 178" />
+        </div>
+        <div class="col-4">
+          <label>Idade</label>
+          <input id="idade" type="number" placeholder="Ex.: 32" />
+        </div>
+
+        <div class="col-6">
+          <label>Sexo</label>
+          <select id="sexo">
+            <option value="">Selecione</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label>Nível de atividade</label>
+          <select id="atividade">
+            <option value="">Selecione</option>
+            <option value="1.2">Sedentário</option>
+            <option value="1.375">Leve</option>
+            <option value="1.55">Moderado</option>
+            <option value="1.725">Intenso</option>
+            <option value="1.9">Atleta</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label>Objetivo / Alinhamento</label>
+          <input id="objetivo" placeholder='Ex.: "Perder gordura", "Ganho de massa", "Manutenção". Pode detalhar.' />
+        </div>
+
+        <div class="col-12">
+          <label>Dieta atual (resuma por dia ou principais refeições)</label>
+          <textarea id="dietaAtual" placeholder="Ex.: Café: pão+queijo+suco; Almoço: arroz+feijão+frango; Lanche: iogurte; Jantar: omelete; Bebidas: 2 refri/semana; Observações..."></textarea>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="toolbar">
+        <button class="btn" id="btnGerar">Analisar e Sugerir Ajustes</button>
+        <button class="btn secondary" id="btnLimpar">Limpar</button>
+        <button class="btn secondary" id="btnExportar">Exportar Resultado (.txt)</button>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="card" id="resultsSection" style="display:block">
+      <h2>Resultados e Ajustes</h2>
+      <div id="resumo" class="result"></div>
+      <div id="comparativo" class="result"></div>
+      <div id="ajustes" class="result"></div>
+      <div id="suplementacao" class="result"></div>
+      <div id="planoRefeicoes" class="result"></div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="card">
+      <div class="small">Dica: se algo não aparecer, verifique se todos os campos foram preenchidos. Este bloco de resultados já inicia visível para evitar problemas de display.</div>
+    </div>
+  </div>
+
+  <script>
+    // Utilidades
+    const $ = (sel) => document.querySelector(sel);
+    function toNumber(v){ const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; }
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function tdeeHarrisBenedict({sexo, peso, altura, idade, atividade}){
+      // BMR (Harris-Benedict revisada)
+      const bmr = sexo === 'M'
+        ? 88.362 + (13.397 * peso) + (4.799 * altura) - (5.677 * idade)
+        : 447.593 + (9.247 * peso) + (3.098 * altura) - (4.330 * idade);
+      return bmr * atividade;
+    }
+
+    function macrosByGoal(cal, peso, objetivo){
+      // Proteína base 1.6–2.2 g/kg; Gordura 0.6–1.0 g/kg; Carbo resto
+      let prot = clamp(1.8 * peso, 1.6 * peso, 2.2 * peso);
+      let gord = clamp(0.8 * peso, 0.6 * peso, 1.0 * peso);
+
+      // Ajuste leve por objetivo (texto livre, detecta palavras-chave)
+      const txt = (objetivo || '').toLowerCase();
+      if (txt.includes('perd') || txt.includes('deficit') || txt.includes('cut')) {
+        prot = clamp(2.0 * peso, 1.8 * peso, 2.4 * peso);
+        gord = clamp(0.7 * peso, 0.5 * peso, 0.9 * peso);
+        cal = cal * 0.8; // déficit ~20%
+      } else if (txt.includes('ganho') || txt.includes('bul') || txt.includes('massa')) {
+        prot = clamp(1.8 * peso, 1.6 * peso, 2.2 * peso);
+        gord = clamp(0.9 * peso, 0.7 * peso, 1.0 * peso);
+        cal = cal * 1.1; // superávit ~10%
+      } else { // manutenção
+        // já ok
+      }
+
+      const kcalsProt = prot * 4;
+      const kcalsGord = gord * 9;
+      let carbKcal = Math.max(cal - kcalsProt - kcalsGord, 0);
+      const carb = carbKcal / 4;
+      return { cal: Math.round(cal), prot: Math.round(prot), gord: Math.round(gord), carb: Math.round(carb) };
+    }
+
+    // Estimativa simplificada dos macros da dieta atual a partir de texto (heurística)
+    function estimateCurrentDietMacros(texto, peso){
+      const t = (texto || '').toLowerCase();
+
+      // Palavras-chave com pesos aproximados em kcal e macros
+      const lib = [
+        // carb base
+        {k: ['arroz','massa','macarr','pao','batata','mandioca','aipim','farofa'], cal: 180, c: 40, p: 4, g: 1},
+        {k: ['feij','lentilha','grao-de-bico'], cal: 140, c: 24, p: 9, g: 1},
+        // proteinas
+        {k: ['frango','peito','carne','bife','patinho','ovo','ovos','omelete','atum','peixe','tilapia'], cal: 180, c: 0, p: 30, g: 6},
+        {k: ['queijo','queijo minas','mussarela','muçarela'], cal: 100, c: 1, p: 7, g: 8},
+        {k: ['leite','iogurte','whey'], cal: 120, c: 8, p: 20, g: 3},
+        // gorduras
+        {k: ['azeite','manteiga','amendoim','pasta de amendoim','castanha','noz','amendoas','amêndoas','abacate'], cal: 90, c: 2, p: 2, g: 9},
+        // doces/bebidas
+        {k: ['refri','refrigerante','suco','doce','chocolate','sorvete','bolacha','biscoito'], cal: 150, c: 35, p: 1, g: 2},
+      ];
+
+      let hits = 0, cal=0, p=0, c=0, g=0;
+      lib.forEach(item=>{
+        const found = item.k.some(k => t.includes(k));
+        if(found){ hits++; cal += item.cal; p += item.p; c += item.c; g += item.g; }
+      });
+
+      // se poucos hits, faça um fallback com base no peso
+      if (hits <= 1) {
+        const calFallback = Math.round(peso * 28); // baixa confiança
+        const pFallback = Math.round(peso * 1.2);
+        const gFallback = Math.round(peso * 0.7);
+        const kcalsPG = pFallback*4 + gFallback*9;
+        const cFallback = Math.max(Math.round((calFallback - kcalsPG)/4), 0);
+        return { cal: calFallback, prot: pFallback, carb: cFallback, gord: gFallback, conf: 'baixa' };
+      }
+      return { cal: Math.round(cal*3), prot: Math.round(p*3), carb: Math.round(c*3), gord: Math.round(g*3), conf: 'média' };
+    }
+
+    function buildComparativo(atual, alvo){
+      const delta = (a,b)=> (a==null||b==null)? null : (b - a);
+      const dCal = delta(atual.cal, alvo.cal);
+      const dP = delta(atual.prot, alvo.prot);
+      const dC = delta(atual.carb, alvo.carb);
+      const dG = delta(atual.gord, alvo.gord);
+
+      function fmt(n, suffix=''){ if(n==null) return '-'; const s = n>0? `+${n}`: `${n}`; return `${s}${suffix}`; }
+      function cls(n){ if(n==null) return 'muted'; if(Math.abs(n) < 5) return 'ok'; return n>0 ? 'warn' : 'bad'; }
+
+      return `
+        <div class="row">
+          <div><strong>Calorias</strong><br><span class="${cls(dCal)}">${fmt(dCal,' kcal')}</span></div>
+          <div><strong>Proteínas</strong><br><span class="${cls(dP)}">${fmt(dP,' g')}</span></div>
+          <div><strong>Carboidratos</strong><br><span class="${cls(dC)}">${fmt(dC,' g')}</span></div>
+          <div><strong>Gorduras</strong><br><span class="${cls(dG)}">${fmt(dG,' g')}</span></div>
+        </div>
+      `;
+    }
+
+    function buildAjustes(atual, alvo, objetivo){
+      const linhas = [];
+      const need = (campo, a, b, unidade) => {
+        if (a==null || b==null) return;
+        const diff = Math.round(b - a);
+        if (Math.abs(diff) < 5 && campo!=='cal') return; // tolerância p/ macros
+        const sentido = diff>0? 'aumentar' : 'reduzir';
+        const u = campo==='cal'? 'kcal' : 'g';
+        linhas.push(`• ${sentido} ${campo === 'prot' ? 'proteínas' : campo === 'carb' ? 'carboidratos' : campo === 'gord' ? 'gorduras' : 'calorias'} em ${Math.abs(diff)} ${u}`);
+      };
+
+      need('cal',  atual.cal,  alvo.cal);
+      need('prot', atual.prot, alvo.prot);
+      need('carb', atual.carb, alvo.carb);
+      need('gord', atual.gord, alvo.gord);
+
+      // Sugestões práticas
+      const dicas = [];
+      if ((alvo.prot - atual.prot) > 10) dicas.push('Adicionar 1–2 porções de proteína magra (ex.: 150–200g de frango/peixe, 4–6 ovos/claras, 1 scoop de whey).');
+      if ((alvo.carb - atual.carb) > 15) dicas.push('Incluir 1–2 porções de carbo complexo (ex.: 100–150g de arroz/batata/aveia).');
+      if ((alvo.gord - atual.gord) > 8) dicas.push('Adicionar fontes de gordura boa (ex.: 1 colher de sopa de azeite, 30g de castanhas).');
+      if ((atual.carb - alvo.carb) > 15) dicas.push('Reduzir porções de refinados e bebidas açucaradas; priorizar verduras e proteína para saciedade.');
+      if ((atual.gord - alvo.gord) > 8) dicas.push('Cortar frituras, queijos gordos e controlar o uso de óleos.');
+
+      if (dicas.length === 0) dicas.push('Pequenos ajustes finos já deixam você muito próximo do alvo. Foque em consistência.');
+
+      return `
+        <div><strong>Objetivo</strong>: ${objetivo || 'Manutenção/Equilíbrio'}</div>
+        <div class="spacer"></div>
+        <div><strong>Ajustes necessários</strong></div>
+        <div>${linhas.length ? linhas.map(l=>`<div>${l}</div>`).join('') : '<div>Você já está muito próximo do alvo.</div>'}</div>
+        <div class="spacer"></div>
+        <div><strong>Sugestões práticas</strong></div>
+        <div>${dicas.map(d=>`<div>- ${d}</div>`).join('')}</div>
+      `;
+    }
+
+    function buildSuplementacao(atual, alvo, objetivo){
+      const out = [];
+      const txt = (objetivo||'').toLowerCase();
+
+      if (alvo.prot - atual.prot > 15) {
+        out.push('Whey protein (20–30g) para ajudar a bater proteína diária.');
+      }
+      if (txt.includes('força') || txt.includes('massa') || txt.includes('ganho') || txt.includes('bulk')) {
+        out.push('Creatina monohidratada 3–5g/dia.');
+      }
+      out.push('Vitamina D e ômega-3 conforme necessidade clínica/exames.');
+      out.push('Cafeína pré-treino (opcional), atenção à tolerância.');
+
+      return `
+        <div><strong>Suplementação sugerida</strong> (opcional)</div>
+        <ul>${out.map(i=>`<li>${i}</li>`).join('')}</ul>
+        <div class="small muted">Observação: suplementos não substituem alimentação balanceada. Procure profissional de saúde para individualização.</div>
+      `;
+    }
+
+    function buildPlanoRefeicoes(alvo){
+      // Modelo simples de distribuição
+      const refeicoes = 4;
+      const p = Math.round(alvo.prot / refeicoes);
+      const c = Math.round(alvo.carb / refeicoes);
+      const g = Math.round(alvo.gord / refeicoes);
+      return `
+        <div><strong>Plano diário (exemplo)</strong> — 4 refeições</div>
+        <div class="spacer"></div>
+        <div class="code">
+Refeição 1: ${p}g proteína, ${c}g carbo, ${g}g gordura
+ - Ex.: Ovos/claras + aveia + frutas
+
+Refeição 2: ${p}g proteína, ${c}g carbo, ${g}g gordura
+ - Ex.: Frango + arroz + feijão + salada + azeite
+
+Refeição 3: ${p}g proteína, ${c}g carbo, ${g}g gordura
+ - Ex.: Iogurte/queijo magro + pão integral ou batata
+
+Refeição 4: ${p}g proteína, ${c}g carbo, ${g}g gordura
+ - Ex.: Peixe/carne magra + legumes + azeite
+        </div>
+      `;
+    }
+
+    function gerar(){
+      const peso = toNumber($('#peso').value);
+      const altura = toNumber($('#altura').value);
+      const idade = toNumber($('#idade').value);
+      const sexo = $('#sexo').value;
+      const atividade = toNumber($('#atividade').value);
+      const objetivo = $('#objetivo').value;
+      const dietaAtualTxt = $('#dietaAtual').value;
+
+      // validação mínima
+      const faltando = [];
+      if(!peso) faltando.push('peso');
+      if(!altura) faltando.push('altura');
+      if(!idade) faltando.push('idade');
+      if(!sexo) faltando.push('sexo');
+      if(!atividade) faltando.push('nível de atividade');
+      if(faltando.length){
+        alert('Preencha: ' + faltando.join(', '));
+        return;
+      }
+
+      const tdee = tdeeHarrisBenedict({sexo, peso, altura, idade, atividade});
+      const alvo = macrosByGoal(tdee, peso, objetivo);
+      const atual = estimateCurrentDietMacros(dietaAtualTxt, peso);
+
+      // Resumo
+      $('#resumo').innerHTML = `
+        <div class="row">
+          <div>
+            <div class="tag">TDEE estimado</div>
+            <div><strong>${Math.round(tdee)} kcal</strong></div>
+            <div class="small muted">Gasto diário estimado</div>
+          </div>
+          <div>
+            <div class="tag">Alvo diário</div>
+            <div><strong>${alvo.cal} kcal</strong></div>
+            <div class="small muted">P: ${alvo.prot}g · C: ${alvo.carb}g · G: ${alvo.gord}g</div>
+          </div>
+          <div>
+            <div class="tag">Dieta atual (estimada)</div>
+            <div><strong>${atual.cal} kcal</strong> <span class="small muted">(conf. ${atual.conf||'—'})</span></div>
+            <div class="small muted">P: ${atual.prot}g · C: ${atual.carb}g · G: ${atual.gord}g</div>
+          </div>
+        </div>
+      `;
+
+      // Comparativo
+      $('#comparativo').innerHTML = `
+        <div><strong>Diferenças vs. alvo</strong></div>
+        ${buildComparativo(atual, alvo)}
+      `;
+
+      // Ajustes
+      $('#ajustes').innerHTML = buildAjustes(atual, alvo, objetivo);
+
+      // Suplementação
+      $('#suplementacao').innerHTML = buildSuplementacao(atual, alvo, objetivo);
+
+      // Plano de refeições
+      $('#planoRefeicoes').innerHTML = buildPlanoRefeicoes(alvo);
+
+      // Garantir que a seção aparece
+      const sec = $('#resultsSection');
+      if (sec && sec.style) sec.style.display = 'block';
+      // Scroll suave até resultados
+      sec?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function limpar(){
+      ['#peso','#altura','#idade','#sexo','#atividade','#objetivo','#dietaAtual'].forEach(sel=>{
+        const el = $(sel); if(!el) return;
+        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        else el.value = '';
+      });
+      ['#resumo','#comparativo','#ajustes','#suplementacao','#planoRefeicoes'].forEach(sel=>{
+        const el = $(sel); if(el) el.innerHTML = '';
+      });
+      const sec = $('#resultsSection');
+      if (sec && sec.style) sec.style.display = 'block';
+    }
+
+    function exportarTxt(){
+      const blocos = ['Resumo', $('#resumo').innerText, '', 'Comparativo', $('#comparativo').innerText, '', 'Ajustes', $('#ajustes').innerText, '', 'Suplementação', $('#suplementacao').innerText, '', 'Plano de Refeições', $('#planoRefeicoes').innerText];
+      const blob = new Blob([blocos.join('\n')], {type: 'text/plain;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'planejamento_nutricional.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // Eventos
+    $('#btnGerar').addEventListener('click', gerar);
+    $('#btnLimpar').addEventListener('click', limpar);
+    $('#btnExportar').addEventListener('click', exportarTxt);
+  </script>
+</body>
+</html>
+ 
+      
